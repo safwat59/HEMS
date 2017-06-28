@@ -1,0 +1,327 @@
+/*
+This sketch is for testing comms with Arduino and MIT AI2 App via bluetooth.
+This sketch is designed to accomadate the addition of multiple bytes being sent
+and received before being processed; currently only one byte is sent and received
+at a time.
+
+Software Serial is used so that the standard serial remains free so you can print
+to the terminal for debugging purposes.  The BT module should be connected to the
+standard serial pins and the code modified as necessary for final applications to 
+avoid disrupting BT comms with program delays.
+
+Version 1.1 added a physical button to change LED state locally
+
+=========== Comm Legend ===========
+ 10 - load1 Off
+ 20 - load1 On
+ 30 - laod 2 off
+ 40 - load 2 on
+ 50 - load 3 off
+ 60 -load 3 on
+ 70 - load 4 off
+ 80- load 4 on
+255 - Request from app for local variable status
+===================================
+
+
+Created by Matt Kachur
+Dec 27 2015
+
+This example code is in the public domain.
+*/
+
+
+// include the library code:
+#include <LiquidCrystal.h>
+#include <SoftwareSerial.h>
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+SoftwareSerial mySerial(0, 1); // Sets Arduino (RX, TX) pins
+//#define defButtonpin 8
+#define defload1pin 6
+#define defload2pin 7
+#define defload3pin 8
+#define defload4pin 9
+
+
+byte lastRead;
+byte currentRead;
+byte load1Status = 10;  // initialize LED in OFF state
+byte load2Status = 30;
+byte load3Status = 50;
+byte load4Status = 70;
+byte solarStatus =90;
+byte gridStatus =110;
+byte gridmodeStatus =130;
+byte modeStatus =150;
+
+
+/*int buttonState = LOW;
+int lastButtonState = LOW;
+long lastDebounceTime = 0;  // the last time the output pin was toggled
+long debounceDelay = 20;    // the debounce time; increase if the output flickers
+*/
+
+
+void setup() {
+    pinMode(defload1pin, OUTPUT);  // LED pin
+    pinMode(defload2pin, OUTPUT);
+    pinMode(defload3pin, OUTPUT);
+    pinMode(defload4pin, OUTPUT);
+    //pinMode(defButtonpin, INPUT);  // Button pin
+    digitalWrite(defload1pin,HIGH); //initialize with LED Off
+    digitalWrite(defload2pin,HIGH);
+    digitalWrite(defload3pin,HIGH);
+    digitalWrite(defload4pin,HIGH);
+    mySerial.begin(9600);
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("power managment");
+  lcd.setCursor(5,1);
+  lcd.print("system");
+}
+
+
+
+void loop() {
+
+
+  while(millis()<=10000){
+   //initial program 
+     lcd.setCursor(14, 1);
+  // print the number of seconds since reset:
+  lcd.print(millis() / 1000);
+    }
+
+    // if there's any serial bytes available, read them:
+    while (mySerial.available() > 0) {
+
+        currentRead = mySerial.read();
+
+        // Read all bytes until a zero is received, store the bytes received
+        // before the zero.
+        if (currentRead != NULL) {
+            lastRead = currentRead;
+        }
+
+        // once a zero is received, evaluate all the bytes read before the zero
+        if (currentRead == NULL) {
+
+            if (lastRead == 255) {  // 255 is request for current status
+                // send back LED status
+                mySerial.write(load4Status);
+            }
+            if (lastRead == 254) {  // 255 is request for current status
+                // send back LED status
+                mySerial.write(load3Status);
+            }
+            if (lastRead == 253) {  // 255 is request for current status
+                // send back LED status
+                mySerial.write(load2Status);
+            }
+            if (lastRead == 252) {  // 255 is request for current status
+                // send back LED status
+                mySerial.write(load1Status);
+            }
+
+            if (lastRead == 10) {
+                load1Status = 10;
+                digitalWrite(defload1pin, HIGH);
+                mySerial.write(load1Status);
+            }
+
+            if (lastRead == 20) {
+                load1Status = 20;
+                digitalWrite(defload1pin, LOW);
+                mySerial.write(load1Status);
+            }
+            if (lastRead == 30) {
+                load2Status = 30;
+                digitalWrite(defload2pin, HIGH);
+                mySerial.write(load2Status);
+            }
+
+            if (lastRead == 40) {
+                load2Status = 40;
+                digitalWrite(defload2pin, LOW);
+                mySerial.write(load2Status);
+            }
+            if (lastRead == 50) {
+                load3Status = 50;
+                digitalWrite(defload3pin, HIGH);
+                mySerial.write(load3Status);
+            }
+
+            if (lastRead == 60) {
+                load3Status = 60;
+                digitalWrite(defload3pin, LOW);
+                mySerial.write(load3Status);
+            }
+            if (lastRead == 70) {
+                load4Status = 70;
+                digitalWrite(defload4pin, HIGH);
+                mySerial.write(load4Status);
+            }
+
+            if (lastRead == 80) {
+                load4Status = 80;
+                digitalWrite(defload4pin, LOW);
+                mySerial.write(load4Status);
+            }
+
+            
+            if (lastRead == 90) {
+                solarStatus = 90;
+            }
+
+            
+            if (lastRead == 100) {
+                solarStatus= 100;
+            } 
+            if (lastRead == 110) {
+                gridStatus = 110;
+            }
+            if (lastRead == 120) {
+                gridStatus = 120;
+            } 
+            
+            if (lastRead == 130) {
+                gridmodeStatus = 130;
+            }
+            
+            if (lastRead == 140) {
+                gridmodeStatus = 140;
+            }
+            
+            if (lastRead == 150) {
+                modeStatus = 150;
+            }
+            if (lastRead == 160) {
+                modeStatus = 160;
+            } 
+            if (lastRead == 170) {
+                //load status
+              lcd.clear();
+              lcd.print("L1  L2  L3  L4  ");
+              if(load1Status==10)
+              {lcd.setCursor(0,1);
+               lcd.print("off"); 
+                }else{lcd.setCursor(0,1);
+               lcd.print("on"); 
+                  };
+
+               if(load2Status==30)
+              {lcd.setCursor(4,1);
+               lcd.print("off"); 
+                }else{lcd.setCursor(4,1);
+               lcd.print("on"); 
+                  } ;  
+                 if(load3Status==50)
+              {lcd.setCursor(8,1);
+               lcd.print("off"); 
+                }else{lcd.setCursor(8,1);
+               lcd.print("on"); 
+                  };
+
+                 if(load4Status==70)
+              {lcd.setCursor(12,1);
+               lcd.print("off"); 
+                }else{lcd.setCursor(12,1);
+               lcd.print("on"); 
+                  };
+            } 
+            if (lastRead == 180) {
+                //grid representation
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("grid");
+            if(gridStatus==110)
+            {lcd.setCursor(5,0);
+             lcd.print("separated");
+              }else {
+                lcd.setCursor(5,0);
+             lcd.print("connected");
+                };
+                lcd.setCursor(0,1);
+                lcd.print("Gridstate");
+                if(gridmodeStatus==130)
+                {lcd.setCursor(10,1);
+                 lcd.print("supply");
+                  }else{
+                    lcd.setCursor(11,1);
+                 lcd.print("load");
+                    }
+         
+            } 
+            
+            if (lastRead == 190) {
+                //solar representation
+
+                lcd.clear();
+            lcd.setCursor(0,0);
+            if(modeStatus==150){
+              lcd.print("solar");
+              }else{
+              lcd.print("battery");  
+                }
+            if(solarStatus==90)
+            {lcd.setCursor(9,0);
+             lcd.print("off");
+              }else {
+                lcd.setCursor(9,0);
+             lcd.print("on");
+                };
+                lcd.setCursor(0,1);
+                lcd.print("mode");
+                if(modeStatus==150)
+                {lcd.setCursor(5,1);
+                 lcd.print("daylight");
+                  }else{
+                    lcd.setCursor(5,1);
+                 lcd.print("night mode");
+                    }
+        
+            } 
+        
+        }
+    }
+
+
+/*
+    // LOCAL BUTTON LED CONTROL
+
+    // read the state of the button into a local variable
+    int buttonReading = digitalRead(defButtonpin);
+
+    // If the button state has changed, due to noise OR pressing
+    if (buttonReading != lastButtonState) {
+        // reset the debouncing timer
+        lastDebounceTime = millis();
+    }
+
+    // check to see if the current state has been the same for longer than
+    // the debounce delay, if true make, it the current state
+    if ((millis() - lastDebounceTime) > debounceDelay) {
+        // if the "new" button state is different from the current,
+        // take actions for a button press
+        if (buttonReading != buttonState) {
+            buttonState = buttonReading;
+            if (buttonState == HIGH) {
+                if (ledStatus == 10) {
+                    ledStatus = 20;
+                    digitalWrite(defLEDpin, HIGH);
+                }
+                else {
+                    ledStatus = 10;
+                    digitalWrite(defLEDpin, LOW);
+                }
+            }
+        }
+    }
+
+    // Save the current button state so it is updated for the next loop iteration
+    lastButtonState = buttonReading;
+*/
+}
+
